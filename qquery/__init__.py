@@ -22,7 +22,7 @@ def open (qdbPath):
     """ Required first call.  Specifies the path to the Quicken database """
     global _qdb, _connection, _accounts, _categories, _payees, _securities
     _qdb = qdbPath
-    _connection = sqlite3.connect ('file:' + _qdb + '?mode=ro')
+    _connection = sqlite3.connect ('file:' + _qdb + '?mode=ro', uri=True)
     _connection.row_factory = sqlite3.Row
     _accounts = _Accounts ()
     _categories = _Categories ()
@@ -138,7 +138,7 @@ class _Accounts:
     def __iter__ (self):
         self.counter=0
         return self
-    def next (self):
+    def __next__ (self):
         while True:
             if self.counter >= len(self.accounts):
                 raise StopIteration()
@@ -150,7 +150,7 @@ class _Accounts:
     def getKeyByName (self, name):
         for account in self.accounts:
             if account['name'] == name: return account['key']
-        print 'Account:getKeyByName: Account not found: ', name
+        print ('Account:getKeyByName: Account not found: ', name)
         exit()
 
 
@@ -184,7 +184,7 @@ class _Categories:
     def __iter__ (self):
         self.counter=0
         return self
-    def next (self):
+    def __next__ (self):
         while True:
             if self.counter>=len(self.categories):
                 raise StopIteration()
@@ -196,12 +196,12 @@ class _Categories:
     def getPathByKey (self, key):
         for category in self.categories:
             if category['key'] == key: return category['path']
-        print 'Categories::getPathByKey: key not found: ', key
+        print ('Categories::getPathByKey: key not found: ', key)
         exit()
     def getKeyByPath (self, path):
         for category in self.categories:
             if category['path'] == path: return category['key']
-        print 'Categories::getKeyByPath: path not found: ', path
+        print ('Categories::getKeyByPath: path not found: ', path)
         exit()
 
 
@@ -214,12 +214,12 @@ class _Payees:
         SQL = 'select z_pk, zname from zuserpayee order by zname'
         self.cursor.execute (SQL)
         return self
-    def next (self):
+    def __next__ (self):
         row = self.cursor.fetchone()
         if row==None: raise StopIteration()
         return {'key':row['z_pk'], 'name':row['zname']}
     def getKeyByName (self, name):
-        print '_Payees.getKeyByName not implemented yet.'
+        print ('_Payees.getKeyByName not implemented yet.')
         exit()
 
 
@@ -232,14 +232,21 @@ class _Securities:
         SQL = 'select z_pk, zname, ztype, zticker from zsecurity'
         c = cursor.execute (SQL)
         for row in c:
-            self.securities.append ({'key': row['z_pk'],
-                                     'name': row['zname'],
-                                     'type': row['ztype'],
-                                     'ticker': row['zticker']})
+            if row['zticker']:
+                self.securities.append ({'key': row['z_pk'],
+                                         'name': row['zname'],
+                                         'type': row['ztype'],
+                                         'ticker': row['zticker']})
+            else:
+                self.securities.append ({'key': row['z_pk'],
+                                         'name': row['zname'],
+                                         'type': row['ztype'],
+                                         'ticker': ''})
+
     def __iter__ (self):
         self.counter = 0
         return self
-    def next (self):
+    def __next__ (self):
         if self.counter >= len(self.securities):
             raise StopIteration()
             return
@@ -248,7 +255,7 @@ class _Securities:
             self.counter += 1
             return s
     def getKeyByName (self, name):
-        print '_Securities.getKeyByName not implemented yet.'
+        print ('_Securities.getKeyByName not implemented yet.')
         exit()
 
 ##############################################################################
@@ -262,7 +269,7 @@ class _Quotes:
             + 'where zsecurity=? order by zquotedate'
         self.cursor.execute (SQL, (str(self.key),))
         return self
-    def next (self):
+    def __next__ (self):
         qrow = self.cursor.fetchone()
         if qrow==None: raise StopIteration()
         row = {'date':  _formatQuickenDate (qrow['zquotedate']),
@@ -364,7 +371,7 @@ class _Transactions:
         SQL += '       order by parentDate asc'
         self.cursor.execute (SQL)
         return self
-    def next (self):
+    def __next__ (self):
         while True:
             trans = self.cursor.fetchone()
             if trans==None: raise StopIteration()
@@ -383,6 +390,10 @@ class _Transactions:
                    'securityKey':    trans['parentSecurityKey'],
                    'securityName':   trans['parentSecurityName'],
                    'securityTicker': trans['parentSecurityTicker']}
+
+            if row['payeeKey']==None:  row['payeeKey']=''
+            if row['payeeName']==None: row['payeeName']=''
+
             if self.dateFrom != None and row['date']<self.dateFrom: continue
             if self.dateTo   != None and row['date']>self.dateTo:   continue
             return row
