@@ -128,10 +128,8 @@ class _Accounts:
         self.accounts = []
         self.cursor = _connection.cursor()
         SQL  = 'select zaccount.z_pk, zaccount.zname as name, '
-        SQL += '       zaccounttype.zname as type '
+        SQL += '       ztypename as type '
         SQL += '       from zaccount '
-        SQL += '       inner join zaccounttype '
-        SQL += '             on zaccount.ztype = zaccounttype.z_pk '
         SQL += '       order by zaccount.zname asc'
         for row in self.cursor.execute (SQL):
             self.accounts.append ({'key':row['z_pk'],
