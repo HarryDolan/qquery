@@ -7,16 +7,16 @@ python module and a command line interface.
 Locating the Database
 ---------------------
 
-Quicken For Mac keeps its user files in ``~/Library/Application Support/Quicken 2017``.
-In that directory the database file is in ``Documents/Qdata.quicken2017/data`` (or thereabouts).
+Quicken For Mac keeps its user files in ``~/Library/Application Support/Quicken``.
+In that directory the database file is in ``Documents/Qdata.quicken/data`` (or thereabouts).
 For safety, do not operate directly on this file.  Make a copy as, for example: ::
 
-   # cd '~/Library/Application Support/Quicken 2017'
-   # cd Documents/Qdata.quicken2017
+   # cd '~/Library/Application Support/Quicken'
+   # cd Documents/Qdata.quicken
    # cp data /tmp/copyofqdata
    # cd /tmp
    # file copyofqdata 
-   copyofqdata: SQLite 3.x database, last written using SQLite version 3019003
+   copyofqdata: SQLite 3.x database, last written using SQLite version 3036000
 
 The output of the last command verifies that the file is an ``sqlite`` database.
 
