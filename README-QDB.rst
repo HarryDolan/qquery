@@ -15,8 +15,7 @@ for me to do the things I wanted to do with them, and I watched with
 frustration as the mysterious ``QDATA.QDF`` file grew and grew.
 
 That all changed when I switched from the Windows version to the Mac version
-in 
-.  Quicken made the switch easy by providing the capability of
+in 2017.  Quicken made the switch easy by providing the capability of
 importing my data from the Windows version.  But I was delighted to discover
 that the Mac version stores my data in a completely open way.  Quicken For Mac
 uses the popular and widely used open source
