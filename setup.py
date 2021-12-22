@@ -5,7 +5,7 @@ def readme():
         return f.read()
 
 setup(name='qquery',
-      version='0.5.8',
+      version='0.6.1',
       description='Interface to Quicken For Mac database',
       long_description=readme(),
       url='https://github.com/HarryDolan/qquery',
