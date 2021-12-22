@@ -15,7 +15,8 @@ for me to do the things I wanted to do with them, and I watched with
 frustration as the mysterious ``QDATA.QDF`` file grew and grew.
 
 That all changed when I switched from the Windows version to the Mac version
-in 2017.  Quicken made the switch easy by providing the capability of
+in 
+.  Quicken made the switch easy by providing the capability of
 importing my data from the Windows version.  But I was delighted to discover
 that the Mac version stores my data in a completely open way.  Quicken For Mac
 uses the popular and widely used open source
@@ -32,13 +33,13 @@ Locating the Data
 -----------------
 
 Quicken For Mac stores the user data in the directory 
-``~/Library/Application Support/Quicken 2017/Documents/Qdata.quicken2017``
+``~/Library/Application Support/Quicken/Documents/Qdata.quicken``
 
 If you go to this directory you will see several files, the largest of which
 is named ``data``.  The UNIX file command reveals it to be an sqlite
 database: ::
 
-  # cd '~/Library/Application Support/Quicken 2017/Documents/Qdata.quicken2017'
+  # cd '~/Library/Application Support/Quicken/Documents/Qdata.quicken'
   # file data
   data: SQLite 3.x database, last written using SQLite version 3019003
 
