@@ -1,0 +1,20 @@
+[project]
+name = "qquery"
+version = "0.6.2"
+authors = [
+  { name="Harry Dolan", email="harry.dolan@gmail.com" },
+]
+description = "Interface to Quicken For Mac database"
+readme = "README.md"
+requires-python = ">=3"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: Public Domain",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+Homepage = "https://github.com/HarryDolan/qquery"
+
+[project.scripts]
+qquery = "qquery.command_line:main"
