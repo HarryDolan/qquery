@@ -3,3 +3,4 @@ qquery.egg-info/
 *~
 *.pyc
 TODO
+.DS_Store
