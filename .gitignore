@@ -4,3 +4,5 @@ qquery.egg-info/
 *.pyc
 TODO
 .DS_Store
+/qquery/tests/
+.idea

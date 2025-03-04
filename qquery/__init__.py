@@ -451,7 +451,7 @@ class _Transactions:
         while True:
             trans = self.cursor.fetchone()
             if trans==None: raise StopIteration()
-            if trans['splitAmount']==None and trans['parentSecurityShares']==None: continue
+            if trans['splitAmount']==None: continue
             row = {'key':            trans['transactionKey'],
                    'date':           _formatQuickenDate (trans['parentDate']),
                    'amount':         trans['splitAmount'],
