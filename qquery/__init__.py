@@ -128,13 +128,18 @@ class _Accounts:
         self.accounts = []
         self.cursor = _connection.cursor()
         SQL  = 'select zaccount.z_pk, zaccount.zname as name, '
-        SQL += '       ztypename as type '
+        SQL += '       ztypename as type, '
+        SQL += '       zusedinreports as usedInReports, '
+        SQL += '       zsimpleinvesting as simpleInvesting '
         SQL += '       from zaccount '
         SQL += '       order by zaccount.zname asc'
         for row in self.cursor.execute (SQL):
             self.accounts.append ({'key':row['z_pk'],
                                    'name':row['name'],
-                                   'type':row['type']})
+                                   'type':row['type'],
+                                   'usedInReports':row['usedInReports'],
+                                   'simpleInvesting':row['simpleInvesting']
+                                   })
     def __iter__ (self):
         self.counter=0
         return self
@@ -278,6 +283,67 @@ class _Quotes:
 
 ##############################################################################
 
+class _Transfers:
+    def __init__ (self):
+        self.transfers = {}
+        self.cursor = _connection.cursor()
+        SQL  = 'select '
+        SQL += '  zcashflowtransactionentry.ztransfer, '
+        SQL += '  zaccount.z_pk, '
+        SQL += '  coalesce(zaccount.zname, zcashflowtransactionentry.ztransfer) as transfer '
+        SQL += '  from zcashflowtransactionentry '
+        SQL += '  left join zcashflowtransactionentry as splitTransfer '
+        SQL += '    on splitTransfer.zquickenid = zcashflowtransactionentry.ztransfer '
+        SQL += '  left join ztransaction '
+        SQL += '    on ztransaction.z_pk = splitTransfer.zparent '
+        SQL += '  left join zaccount '
+        SQL += '    on zaccount.z_pk = ztransaction.zaccount '
+        for row in self.cursor.execute (SQL):
+            self.transfers[row['ztransfer']] = {'accountKey': row['z_pk'],
+                                                'accountName': row['transfer']}
+
+    def getAccountNameByTransferKey(self, key):
+        if key in self.transfers:
+            return self.transfers[key]['accountName']
+        else:
+            return None
+
+    def getAccountKeyByTransferKey (self, key):
+        if key in self.transfers:
+            return self.transfers[key]['accountKey']
+        else:
+            return None
+
+##############################################################################
+
+class _UserTags:
+    def __init__ (self):
+        self.cursor = _connection.cursor()
+        SQL  = 'select '
+        SQL += '  zcashflowtransactionentry.z_pk, '
+        SQL += '  ztag.zname '
+        SQL += '  from zcashflowtransactionentry '
+        SQL += '  join z_20usertags '
+        SQL += '    on z_20usertags.z_20cashflowtransactionentries = zcashflowtransactionentry.z_pk '
+        SQL += '  join ztag '
+        SQL += '    on ztag.z_pk = z_20usertags.z_79usertags '
+        u = self.cursor.execute (SQL)
+        self.usertags = {}
+        for row in u:
+            if row['z_pk'] in self.usertags.keys():
+                self.usertags[row['z_pk']]['names'] += ',' + row['zname']
+            else:
+                self.usertags[row['z_pk']] = {'key':     row['z_pk'],
+                                              'names':   row['zname']}
+
+    def getUserTagNamesBySplitTransactionKey(self, key):
+        if key in self.usertags:
+            return self.usertags[key]['names']
+        else:
+            return None
+
+##############################################################################
+
 class _Transactions:
     def __init__ (self):
         self.counter=0
@@ -287,6 +353,8 @@ class _Transactions:
         self.C = _Categories ()
         self.P = _Payees ()
         self.S = _Securities ()
+        self.T = _Transfers ()
+        self.U = _UserTags ()
         self.SQLconditional = ''
 
         if _restrictToAccounts != None:
@@ -351,11 +419,19 @@ class _Transactions:
         SQL += '  zposition.zsecurity               as parentSecurityKey, '
         SQL += '  zsecurity.zname                   as parentSecurityName, '
         SQL += '  zsecurity.zticker                 as parentSecurityTicker, '
+        SQL += '  ztransaction.ztype                as parentTypeKey, '
+        SQL += '  ztransaction.zcommission          as parentCommission, '
+        SQL += '  ztransaction.zcostbasis           as parentCostBasis, '
         SQL += '  zcashflowtransactionentry.zparent as splitParentKey, '
         SQL += '  zcashflowtransactionentry.zcategorytag  '
         SQL += '                                    as splitCategoryKey, '
         SQL += '  zcashflowtransactionentry.zamount as splitAmount, '
-        SQL += '  zcashflowtransactionentry.znote   as splitNote '
+        SQL += '  zcashflowtransactionentry.znote   as splitNote, '
+        SQL += '  ztransaction.znumerator           as stockSplitNumerator, '
+        SQL += '  ztransaction.zdenominator         as stockSplitDenominator, '
+        SQL += '  zcashflowtransactionentry.ztransfer  '
+        SQL += '                                    as splitTransferKey, '
+        SQL += '  zcashflowtransactionentry.z_pk    as splitTransactionKey '
         SQL += '  from  ztransaction '
         SQL += '  left join zcashflowtransactionentry '
         SQL += '    on ztransaction.z_pk = zcashflowtransactionentry.zparent '
@@ -390,11 +466,25 @@ class _Transactions:
                    'securityKey':    trans['parentSecurityKey'],
                    'securityName':   trans['parentSecurityName'],
                    'securityTicker': trans['parentSecurityTicker'],
-                   'parentNote':     trans['parentNote']}
+                   'parentNote':     trans['parentNote'],
+                   'typeKey':        trans['parentTypeKey'],
+                   'commission':     trans['parentCommission'],
+                   'costbasis':      trans['parentCostBasis'],
+                   'splitNote':      trans['splitNote'],
+                   'numerator':      trans['stockSplitNumerator'],
+                   'denominator':    trans['stockSplitDenominator'],
+                   'transferAcctName':  \
+                              self.T.getAccountNameByTransferKey(trans['splitTransferKey']),
+                   'transferAcctKey':   \
+                              self.T.getAccountKeyByTransferKey(trans['splitTransferKey']),
+                   'tags':              \
+                              self.U.getUserTagNamesBySplitTransactionKey(trans['splitTransactionKey'])
+                   }
 
             if row['payeeKey']==None:  row['payeeKey']=''
             if row['payeeName']==None: row['payeeName']=''
             if row['parentNote']==None: row['parentNote']=''
+            if row['transferAcctName']==None: row['transferAcctName']=''
 
             if self.dateFrom != None and row['date']<self.dateFrom: continue
             if self.dateTo   != None and row['date']>self.dateTo:   continue
